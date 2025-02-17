@@ -2,15 +2,41 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# Configuração inicial da página
+# Configuração da página
 st.set_page_config(page_title="Gestão de Apostas", layout="wide")
+
+# Estilo CSS para melhorar a aparência
+st.markdown(
+    """
+    <style>
+    body {
+        background-color: #f5f5f5;
+    }
+    .stApp {
+        background-color: #e8f0fe;
+    }
+    .stDataFrame {
+        background-color: white;
+        border-radius: 10px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 # Título da aplicação
 st.title("📊 Gestão de Apostas Controladas")
 
-# Inicializar dados
+# Inicializar banca
+if "banca" not in st.session_state:
+    st.session_state["banca"] = 300.0  # Valor inicial da banca
+
+# Inicializar histórico de apostas
 if "dados" not in st.session_state:
     st.session_state["dados"] = []
+
+# Exibir saldo atual
+st.subheader(f"💰 Saldo Atual: €{st.session_state['banca']:.2f}")
 
 # Formulário para adicionar aposta
 with st.form("nova_aposta"):
@@ -34,7 +60,10 @@ with st.form("nova_aposta"):
         # Cálculo do lucro da aposta
         lucro = (valor_back * (odd_back - 1)) - (valor_lay * (odd_lay - 1))
         st.session_state["dados"].append([data, casa, valor_back, odd_back, valor_lay, odd_lay, lucro])
-        st.success("Aposta registada com sucesso!")
+
+        # Atualizar banca
+        st.session_state["banca"] += lucro
+        st.success(f"Aposta registada com sucesso! Novo saldo: €{st.session_state['banca']:.2f}")
 
 # Converter dados em DataFrame
 df = pd.DataFrame(st.session_state["dados"], columns=["Data", "Casa", "Valor Back", "Odd Back", "Valor Lay", "Odd Lay", "Lucro (€)"])
@@ -44,12 +73,13 @@ st.subheader("📜 Histórico de Apostas")
 st.dataframe(df, height=300)
 
 # Gráfico de lucros
-st.subheader("📊 Evolução do Lucro")
+st.subheader("📊 Evolução da Banca")
 fig, ax = plt.subplots()
-ax.plot(df["Data"], df["Lucro (€)"], marker='o', linestyle='-', color='green')
-ax.set_xlabel("Data")
-ax.set_ylabel("Lucro (€)")
-ax.set_title("Evolução dos Lucros")
+banca_values = [300] + list(df["Lucro (€)"].cumsum() + 300)
+ax.plot(range(len(banca_values)), banca_values, marker='o', linestyle='-', color='green')
+ax.set_xlabel("Número de Apostas")
+ax.set_ylabel("Saldo (€)")
+ax.set_title("Evolução da Banca")
 st.pyplot(fig)
 
 # Exportação de dados
