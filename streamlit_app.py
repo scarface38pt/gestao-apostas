@@ -35,6 +35,10 @@ if "banca" not in st.session_state:
 if "dados" not in st.session_state:
     st.session_state["dados"] = []
 
+# Inicializar dados de Matched Betting
+if "mb_dados" not in st.session_state:
+    st.session_state["mb_dados"] = []
+
 # Exibir saldo atual
 st.subheader(f"💰 Saldo Atual: €{st.session_state['banca']:.2f}")
 
@@ -65,12 +69,39 @@ with st.form("nova_aposta"):
         st.session_state["banca"] += lucro
         st.success(f"Aposta registada com sucesso! Novo saldo: €{st.session_state['banca']:.2f}")
 
+# Formulário para adicionar aposta de Matched Betting
+with st.form("nova_aposta_mb"):
+    st.subheader("🎲 Calculadora Matched Betting")
+
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        valor_back_mb = st.number_input("💰 Valor Back (€) - Matched Betting", min_value=0.0, step=0.1)
+        odd_back_mb = st.number_input("📈 Odd Back - Matched Betting", min_value=1.0, step=0.01)
+
+    with col2:
+        valor_lay_mb = st.number_input("💰 Valor Lay (€) - Matched Betting", min_value=0.0, step=0.1)
+        odd_lay_mb = st.number_input("📉 Odd Lay - Matched Betting", min_value=1.0, step=0.01)
+
+    submitted_mb = st.form_submit_button("✅ Registar Aposta Matched Betting")
+
+    if submitted_mb:
+        # Cálculo de Matched Betting
+        lucro_mb = (valor_back_mb * (odd_back_mb - 1)) - (valor_lay_mb * (odd_lay_mb - 1))
+        st.session_state["mb_dados"].append([data, valor_back_mb, odd_back_mb, valor_lay_mb, odd_lay_mb, lucro_mb])
+        st.success(f"Aposta Matched Betting registada com sucesso! Lucro: €{lucro_mb:.2f}")
+
 # Converter dados em DataFrame
 df = pd.DataFrame(st.session_state["dados"], columns=["Data", "Casa", "Valor Back", "Odd Back", "Valor Lay", "Odd Lay", "Lucro (€)"])
+df_mb = pd.DataFrame(st.session_state["mb_dados"], columns=["Data", "Valor Back", "Odd Back", "Valor Lay", "Odd Lay", "Lucro (€)"])
 
 # Mostrar tabela de apostas
 st.subheader("📜 Histórico de Apostas")
 st.dataframe(df, height=300)
+
+# Mostrar tabela de Matched Betting
+st.subheader("📜 Histórico de Matched Betting")
+st.dataframe(df_mb, height=300)
 
 # Gráfico de lucros
 st.subheader("📊 Evolução da Banca")
@@ -84,4 +115,5 @@ st.pyplot(fig)
 
 # Exportação de dados
 st.subheader("📤 Exportar Dados")
-st.download_button("📥 Baixar Excel", df.to_csv(index=False).encode("utf-8"), "gestao_apostas.csv", "text/csv")
+st.download_button("📥 Baixar Histórico de Apostas", df.to_csv(index=False).encode("utf-8"), "gestao_apostas.csv", "text/csv")
+st.download_button("📥 Baixar Histórico de Matched Betting", df_mb.to_csv(index=False).encode("utf-8"), "gestao_matched_betting.csv", "text/csv")
