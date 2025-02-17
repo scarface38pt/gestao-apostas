@@ -39,6 +39,10 @@ if "dados" not in st.session_state:
 if "mb_dados" not in st.session_state:
     st.session_state["mb_dados"] = []
 
+# Inicializar casas de apostas
+if "casas" not in st.session_state:
+    st.session_state["casas"] = []
+
 # Exibir saldo atual
 st.subheader(f"💰 Saldo Atual: €{st.session_state['banca']:.2f}")
 
@@ -91,9 +95,24 @@ with st.form("nova_aposta_mb"):
         st.session_state["mb_dados"].append([data, valor_back_mb, odd_back_mb, valor_lay_mb, odd_lay_mb, lucro_mb])
         st.success(f"Aposta Matched Betting registada com sucesso! Lucro: €{lucro_mb:.2f}")
 
+# Formulário para adicionar casas de apostas
+with st.form("nova_casa"):
+    st.subheader("🏠 Registo de Casas de Apostas")
+
+    casa_nome = st.text_input("Nome da Casa de Apostas")
+    tipo_relacao = st.selectbox("Tipo de Relação", ["Parceria", "Promoção", "Bônus", "Outro"])
+    bonus_oferecido = st.text_area("Bônus Oferecido", "Ex: Bônus de Boas-Vindas de 100%")
+
+    submitted_casa = st.form_submit_button("✅ Adicionar Casa")
+
+    if submitted_casa:
+        st.session_state["casas"].append([casa_nome, tipo_relacao, bonus_oferecido])
+        st.success(f"Casa de Apostas '{casa_nome}' registrada com sucesso!")
+
 # Converter dados em DataFrame
 df = pd.DataFrame(st.session_state["dados"], columns=["Data", "Casa", "Valor Back", "Odd Back", "Valor Lay", "Odd Lay", "Lucro (€)"])
 df_mb = pd.DataFrame(st.session_state["mb_dados"], columns=["Data", "Valor Back", "Odd Back", "Valor Lay", "Odd Lay", "Lucro (€)"])
+df_casas = pd.DataFrame(st.session_state["casas"], columns=["Casa", "Tipo de Relação", "Bônus Oferecido"])
 
 # Mostrar tabela de apostas
 st.subheader("📜 Histórico de Apostas")
@@ -102,6 +121,10 @@ st.dataframe(df, height=300)
 # Mostrar tabela de Matched Betting
 st.subheader("📜 Histórico de Matched Betting")
 st.dataframe(df_mb, height=300)
+
+# Mostrar tabela de Casas de Apostas
+st.subheader("🏠 Registros de Casas de Apostas")
+st.dataframe(df_casas, height=300)
 
 # Gráfico de lucros
 st.subheader("📊 Evolução da Banca")
@@ -117,3 +140,4 @@ st.pyplot(fig)
 st.subheader("📤 Exportar Dados")
 st.download_button("📥 Baixar Histórico de Apostas", df.to_csv(index=False).encode("utf-8"), "gestao_apostas.csv", "text/csv")
 st.download_button("📥 Baixar Histórico de Matched Betting", df_mb.to_csv(index=False).encode("utf-8"), "gestao_matched_betting.csv", "text/csv")
+st.download_button("📥 Baixar Registro de Casas de Apostas", df_casas.to_csv(index=False).encode("utf-8"), "gestao_casas_apostas.csv", "text/csv")
